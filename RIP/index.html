@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ARQ</title>
+</head>
+<body>
+    <div id="RIP">
+        <div>
+            请输入路由器名(A-Z)(1位):<span id="alphabet"></span>
+        </div>
+        <div id="routerMsg">
+            当前路由表信息为:<br>
+            目的网络,距离,下一跳路由器<br>
+            N1,5,<span id="alphabet1"></span><br>
+            N2,4,<span id="alphabet2"></span><br>
+            N3,8,<span id="alphabet3"></span><br>
+            N6,4,<span id="alphabet4"></span><br>
+            N8,3,<span id="alphabet5"></span><br>
+        </div>
+        <button id="change">发送</button>
+    </div>
+    <script>
+        var router = window.prompt("请输入路由器名(A-Z)(1位)", "")
+        alphabet.innerHTML = router;
+        alphabet1.innerHTML = router;
+        alphabet2.innerHTML = router;
+        alphabet3.innerHTML = router;
+        alphabet4.innerHTML = router;
+        alphabet5.innerHTML = router;
+        
+        // var obj = {
+        //     N1:[5,'A'],
+        //     N2:[3,'C'],
+        //     N6:[6,'F'],
+        //     N8:[4,'E']
+        // }
+        // console.log(obj);
+        // console.log(Object.keys(obj)[0]);
+        // var routerNum = window.prompt("请输入路由信息数量", "")
+        // for(var i = 0; i < routerNum; i++){
+        //     var msg = window.prompt("请输入目的网络和距离", "")
+        //     var p = document.createElement('div');
+        //     p.innerHTML = msg;
+        //     routerMsg.appendChild(p);
+        // }
+        
+        document.getElementById('change').onclick = function(){
+
+            ws = new WebSocket('ws://127.0.0.1:12345');
+
+            ws.onopen = function () {
+                ws.send(JSON.stringify({
+                    N1: [5,router],
+                    N2: [4,router], 
+                    N3: [8,router],
+                    N6: [4,router],
+                    N8: [3,router]
+                }));
+            }
+            var p = document.createElement('div');
+            p.innerHTML = "发送成功";
+            routerMsg.appendChild(p);
+            change.style.display="none";
+        }
+    </script>
+</body>
+ 
+</html>

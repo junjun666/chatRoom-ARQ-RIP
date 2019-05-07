@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ARQ</title>
+</head>
+<body>
+    <div id="ARQ">
+        <input type="text" id="data" placeholder="请输入数据帧">
+        <button id="change">转换</button>
+    </div>
+    <script>
+        var flag = 1;
+        var timer1,timer2;
+        document.getElementById('change').onclick = function(){
+            flag = reverse(flag);
+            var brDiv = document.createElement('br');
+            ARQ.appendChild(brDiv);
+            var data1 = +document.getElementById('data').value;
+            var num = data1.toString(2);
+            var result = num[0] ^ num[1];
+            for(var i = 1; i < num.length-1; i++){
+                result = result ^ num[i + 1];
+            }
+            var p = document.createElement('div');
+            p.innerHTML = "第一次数据编号为" + flag + "-" + num + " " + result;
+            ARQ.appendChild(p);
+
+            var p = document.createElement('div');
+            var random = Math.floor(Math.random() * 3);
+            p.innerHTML = "产生的随机数为:" + random;
+            ARQ.appendChild(p);
+
+            ws = new WebSocket('ws://127.0.0.1:12345');
+
+            switch (random) {
+                case 0:
+                    ws.onopen = function () {
+                        ws.send(JSON.stringify({
+                            datanum: data1,
+                            checkbit: result, 
+                            randomNum : random
+                        }));
+                    }
+                    timer1 = setInterval(function(){
+                        ws.send(JSON.stringify({
+                            datanum: data1,
+                            checkbit: result,
+                            randomNum : random
+                        }));
+                    },3000)
+                    break;
+            
+
+                case 1:
+                    var p = document.createElement('div');
+                    var oresult = reverse(result);
+                    p.innerHTML = "err_data:" + num + " " + oresult;
+                    ARQ.appendChild(p);
+
+                    
+                    ws.onopen = function () {
+                        ws.send(JSON.stringify({
+                            datanum: data1,
+                            checkbit: oresult, 
+                            randomNum : random
+                        }));
+                    }
+
+                    timer2 = setInterval(function(){
+                        ws.send(JSON.stringify({
+                            datanum: data1,
+                            checkbit: result,
+                            randomNum : random
+                        }));
+                    },3000)
+                    break;
+
+
+                case 2:
+                    ws.onopen = function () {
+                        ws.send(JSON.stringify({
+                            datanum: "lose", 
+                            randomNum : random
+                        }));
+                    }
+                    setTimeout(function(){
+                        var p6 = document.createElement('div');
+                        p6.innerHTML = "超时，重发数据";
+                        ARQ.appendChild(p6);
+                        var p = document.createElement('div');
+                        p.innerHTML = "重新数据编号为" + flag + "-" + num + " " + result;
+                        ARQ.appendChild(p);
+                        ws.send(JSON.stringify({
+                            datanum: data1,
+                            checkbit: result,
+                            randomNum : random
+                        }));
+                    },3000)
+                    break;
+
+                default:
+                    break;
+            }
+
+            ws.onmessage = function(e){
+                var data = JSON.parse(e.data);
+                switch(data.randomS){
+                    case 0:
+                        var p = document.createElement('div');
+                        p.innerHTML = "收到ACK确认帧，请继续传送";
+                        ARQ.appendChild(p);
+                        clearInterval(timer1);
+                        break;
+
+                    case 1:
+                        if (data.message == "NAK"){
+                            var p = document.createElement('div');
+                            p.innerHTML = "收到NAK否认帧，重新发送数据";
+                            ARQ.appendChild(p);
+                            var p = document.createElement('div');
+                            p.innerHTML = "重新数据编号为" + flag + "-" + num + " " + result;
+                            ARQ.appendChild(p);
+                            ws.send(JSON.stringify({
+                                datanum: data1,
+                                checkbit: reverse(oresult), 
+                                randomNum : random
+                            }));
+                        }else{
+                            var p = document.createElement('div');
+                            p.innerHTML = "收到ACK确认帧，请继续传送";
+                            ARQ.appendChild(p);
+                            clearInterval(timer2);
+                        }   
+                        break;
+
+                    case 2:
+                        var p = document.createElement('div');
+                        p.innerHTML = "收到ACK确认帧，请继续传送";
+                        ARQ.appendChild(p);
+                        break;
+                }
+            }
+        }
+
+
+        // 0/1转换函数
+        function reverse(flag){  
+            return ~flag + 2;  
+        }  
+    </script>
+</body>
+ 
+</html>
